@@ -985,9 +985,10 @@ static inline void hlist_add_after_rcu(struct hlist_node *prev,
  * the _rcu list-mutation primitives such as hlist_add_head_rcu()
  * as long as the traversal is guarded by rcu_read_lock().
  */
+// 这里的1 是为了返回值为1，让for循 正确运行, 这里相当于一个for循环的循环头
 #define hlist_for_each_entry_rcu(tpos, pos, head, member)		 \
 	for (pos = (head)->first;					 \
-	     rcu_dereference(pos) && ({ prefetch(pos->next); 1;}) &&	 \
+	     rcu_dereference(pos) && ({ prefetch(pos->next); 1;}) &&	 \ 
 		({ tpos = hlist_entry(pos, typeof(*tpos), member); 1;}); \
 	     pos = pos->next)
 

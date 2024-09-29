@@ -263,20 +263,20 @@ struct pid *alloc_pid(struct pid_namespace *ns)
 		if (nr < 0)
 			goto out_free;
 
-		pid->numbers[i].nr = nr;
+		pid->numbers[i].nr = nr; // 记录该pid在不同level下的pid_t值和命名空间
 		pid->numbers[i].ns = tmp;
 		tmp = tmp->parent;
 	}
 
 	get_pid_ns(ns);
-	pid->level = ns->level;
+	pid->level = ns->level; // 记录pid的level
 	atomic_set(&pid->count, 1);
 	for (type = 0; type < PIDTYPE_MAX; ++type)
 		INIT_HLIST_HEAD(&pid->tasks[type]);
 
 	spin_lock_irq(&pidmap_lock);
 	for (i = ns->level; i >= 0; i--) {
-		upid = &pid->numbers[i];
+		upid = &pid->numbers[i]; // 获得各个level下的upid， 并将upid的pid_chain插入到对应的pid_hash中
 		hlist_add_head_rcu(&upid->pid_chain,
 				&pid_hash[pid_hashfn(upid->nr, upid->ns)]);
 	}
@@ -301,12 +301,13 @@ struct pid * fastcall find_pid_ns(int nr, struct pid_namespace *ns)
 {
 	struct hlist_node *elem;
 	struct upid *pnr;
-
+// 循环迭代pid_chain，直到找到nr和ns都匹配的upid
+// 从pid_hash[hash过的键值]开始找，pid_hash每个存放的是一个hlist_head 储存的的node则为upid的pid_chain，获得这里的pid_chain,就可以得到对应upid
 	hlist_for_each_entry_rcu(pnr, elem,
 			&pid_hash[pid_hashfn(nr, ns)], pid_chain)
 		if (pnr->nr == nr && pnr->ns == ns)
 			return container_of(pnr, struct pid,
-					numbers[ns->level]);
+					numbers[ns->level]); // 这里从pnr获得pid的地址, 这里因为每个struct pid的numers数组类型为upid，所以知道了正确的upid，就可以获得对应的pid地址
 
 	return NULL;
 }
@@ -371,7 +372,7 @@ void fastcall transfer_pid(struct task_struct *old, struct task_struct *new,
 	hlist_replace_rcu(&old->pids[type].node, &new->pids[type].node);
 	old->pids[type].pid = NULL;
 }
-
+// 取出pid对应type的task链表下的第一个task
 struct task_struct * fastcall pid_task(struct pid *pid, enum pid_type type)
 {
 	struct task_struct *result = NULL;
@@ -396,7 +397,7 @@ struct task_struct *find_task_by_pid_type_ns(int type, int nr,
 EXPORT_SYMBOL(find_task_by_pid_type_ns);
 
 /**
- * 通过全局pid查找任务
+ * 通过全局pid查找任务 这里的话区别就在于传递进去的命名空间不同，hash出来的表头不同，然后得到的pid结构体不同，所以返回的task也不同
  */
 struct task_struct *find_task_by_pid(pid_t nr)
 {
