@@ -96,7 +96,10 @@ register unsigned long current_stack_pointer asm("esp") __attribute_used__;
 /* how to get the thread information struct from C */
 static inline struct thread_info *current_thread_info(void)
 {
-	return (struct thread_info *)(current_stack_pointer & ~(THREAD_SIZE - 1));
+  /* 这里或取栈的最高位的某一处偏移量来获得当前的thread_info */
+  /* 这里的~(a - 1) 的值为 -x，即高位为1，而低位值为这个thread_size的二进制表示-1， &操作后则取最高位*/
+  /* THREAD_SIZE - 1 为 0x1FFF, 取反后为0xFFFFE000, 可以取道对应8kb的值 */
+	return (struct thread_info *)(current_stack_pointer & ~(THREAD_SIZE - 1)); 
 }
 
 /* thread information allocation */
