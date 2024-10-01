@@ -7,11 +7,13 @@ struct task_struct;
 #include <asm/pda.h>
 
 static inline struct task_struct *get_current(void) 
-{ 
+{
+  /* 这里的read_pda是一个宏，这里的pcurrent相当于是一个字段 */
+  /* 从特殊的内核栈中获取task的指针 */
 	struct task_struct *t = read_pda(pcurrent); 
 	return t;
 } 
-
+/* current 则调用get_current 函数获取task_struct * */
 #define current get_current()
 
 #else
