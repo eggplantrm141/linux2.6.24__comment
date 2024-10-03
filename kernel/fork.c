@@ -1351,7 +1351,7 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	proc_fork_connector(p);
 	cgroup_post_fork(p);
 	return p;
-
+/* 这里的tag用于失败时的资源释放，越开始的申请越在底部，越后面的申请的tag越在上方，这样错误时释放就可以释放之前申请成功的一些资源 */
 bad_fork_free_pid:
 	if (pid != &init_struct_pid)
 		free_pid(pid);

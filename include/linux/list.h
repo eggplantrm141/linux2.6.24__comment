@@ -17,7 +17,7 @@
  * generate better code by using them directly rather than
  * using the generic single-entry routines.
  */
-
+/* 这里有别于hlist是正常的list，每个head就相当于是一个节点里面有两个元素 */
 struct list_head {
 	struct list_head *next, *prev;
 };
